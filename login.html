@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Task Manager</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #dbeafe);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 35px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transition: 0.3s;
+    }
+    h2 {
+      color: #4f46e5;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+    input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #4f46e5;
+      transform: scale(1.02);
+    }
+    .switch {
+      margin-top: 10px;
+      color: #475569;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 0.95rem;
+    }
+    .error {
+      color: #dc2626;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      display: none;
+    }
+    .success {
+      color: #16a34a;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="authTitle">Login</h2>
+    <div id="errorMsg" class="error"></div>
+    <div id="successMsg" class="success"></div>
+
+    <input type="text" id="email" placeholder="Email (e.g. name123@gmail.com)" />
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <button id="authBtn">Login</button>
+    <div class="switch" id="toggleAuth">Don't have an account? Register</div>
+  </div>
+
+  <script>
+    const authTitle = document.getElementById("authTitle");
+    const authBtn = document.getElementById("authBtn");
+    const toggleAuth = document.getElementById("toggleAuth");
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+
+    const emailInput = document.getElementById("email");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    let isLogin = true;
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+
+    toggleAuth.addEventListener("click", () => {
+      isLogin = !isLogin;
+      authTitle.textContent = isLogin ? "Login" : "Register";
+      authBtn.textContent = isLogin ? "Login" : "Register";
+      toggleAuth.textContent = isLogin
+        ? "Don't have an account? Register"
+        : "Already have an account? Login";
+      clearMessages();
+    });
+
+    function validateInput(email, username, password) {
+      const emailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      const usernamePattern = /^[a-zA-Z0-9_]{3,15}$/;
+      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+
+      if (!emailPattern.test(email))
+        return "Invalid email format! Only Gmail addresses allowed.";
+      if (!usernamePattern.test(username))
+        return "Username must be 3–15 characters (letters, numbers, underscores).";
+      if (!passwordPattern.test(password))
+        return "Password must be at least 6 chars & contain letters + numbers.";
+      return null;
+    }
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = "block";
+      successMsg.style.display = "none";
+    }
+
+    function showSuccess(message) {
+      successMsg.textContent = message;
+      successMsg.style.display = "block";
+      errorMsg.style.display = "none";
+    }
+
+    function clearMessages() {
+      errorMsg.style.display = "none";
+      successMsg.style.display = "none";
+    }
+
+    authBtn.addEventListener("click", () => {
+      const email = emailInput.value.trim();
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      clearMessages();
+
+      const validationError = validateInput(email, username, password);
+      if (validationError) {
+        showError(validationError);
+        return;
+      }
+
+      if (isLogin) {
+        if (!users[username] || users[username].password !== password) {
+          showError("User not found or wrong username/password.");
+          return;
+        }
+        localStorage.setItem("currentUser", username);
+        window.location.href = "taskmanager.html";
+      } else {
+        if (users[username]) {
+          showError("User already exists! Please login.");
+          return;
+        }
+        users[username] = { email, password, tasks: [] };
+        localStorage.setItem("users", JSON.stringify(users));
+        showSuccess("Registration successful! Please login.");
+        // Switch to login automatically after registration
+        setTimeout(() => {
+          toggleAuth.click();
+          clearMessages();
+        }, 1500);
+      }
+    });
+  </script>
+</body>
+</html>
